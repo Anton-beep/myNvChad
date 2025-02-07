@@ -13,3 +13,5 @@ map('i', '<C-l>', function ()
   vim.fn.feedkeys(vim.fn['copilot#Accept'](), '')
 end, { desc = 'Copilot Accept', noremap = true, silent = true })
 
+map('n', 'cc', ":CopilotChatToggle<CR>", { desc = 'Copilot Chat Toggle', noremap = true, silent = true })
+
