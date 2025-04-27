@@ -9,6 +9,7 @@ return {
 
     require("nvim-treesitter.configs").setup {
       ensure_installed = { "lua", "luadoc", "printf", "vim", "vimdoc" },
+      auto_install = true,
       highlight = {
         enable = true,
         use_languagetree = true,
