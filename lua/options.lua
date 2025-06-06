@@ -13,3 +13,5 @@ if vim.g.neovide == true then
 	vim.o.guifont = "JetBrainsMono Nerd Font"
 end
 
+require "configs.fixDockerComposeFiletype"
+
