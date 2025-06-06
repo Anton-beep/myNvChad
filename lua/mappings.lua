@@ -13,7 +13,7 @@ map("i", "<C-l>", function()
   vim.fn.feedkeys(vim.fn["copilot#Accept"](), "")
 end, { desc = "Copilot Accept", noremap = true, silent = true })
 
-map("n", "cc", ":CopilotChatToggle<CR>", { desc = "Copilot Chat Toggle", noremap = true, silent = true })
+map("n", "<leader>cc", ":CopilotChatToggle<CR>", { desc = "Copilot Chat Toggle", noremap = true, silent = true })
 
 map("n", "sh", ":split<CR>", { desc = "Split Horizontal", noremap = true, silent = true })
 map("n", "sv", ":vsplit<CR>", { desc = "Split Vertical", noremap = true, silent = true })
