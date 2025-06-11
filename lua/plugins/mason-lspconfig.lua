@@ -5,5 +5,6 @@ return {
       ensure_installed = require("configs.lspServers"),
     })
   end,
+  lazy = false,
 }
 
