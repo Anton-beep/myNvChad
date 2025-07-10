@@ -14,4 +14,5 @@ if vim.g.neovide == true then
 end
 
 require "configs.fixDockerComposeFiletype"
+require "configs.pendulumConfig"
 
