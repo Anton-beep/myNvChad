@@ -11,6 +11,5 @@ return {
   "ruff",
   "gopls",
   "golangci_lint_ls",
-  "nginx_language_server",
+  "nginx_language_server"
 }
-
