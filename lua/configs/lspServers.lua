@@ -12,5 +12,6 @@ return {
   "gopls",
   "golangci_lint_ls",
   "nginx_language_server",
-  "somesass_ls"
+  "somesass_ls",
+  "jsonls"
 }
