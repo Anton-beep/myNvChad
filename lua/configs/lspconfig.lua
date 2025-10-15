@@ -11,6 +11,7 @@ for _, lsp in ipairs(servers) do
     on_init = nvlsp.on_init,
     capabilities = nvlsp.capabilities,
   })
+  vim.lsp.enable(lsp)
 end
 
 -- configuring single server, example: typescript

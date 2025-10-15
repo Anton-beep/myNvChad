@@ -11,7 +11,7 @@ return {
   },
   git = {
 		ignore = false,
-    timeout = 1000,
+    timeout = 4000,
 	},
   view = {
     width = 40,
