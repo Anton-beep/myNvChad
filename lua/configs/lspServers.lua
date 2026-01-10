@@ -9,9 +9,11 @@ return {
   "clangd",
   "bashls",
   "ruff",
+  -- "basedpyright",
   "gopls",
   "golangci_lint_ls",
   "nginx_language_server",
   "somesass_ls",
-  "jsonls"
+  "jsonls",
+  "java_language_server",
 }
