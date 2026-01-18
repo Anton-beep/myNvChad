@@ -20,7 +20,7 @@ local function ensure_installed(original_name)
   -- Safety check: Ensure the package exists in the registry
   if not registry.has_package(mason_name) then
     vim.notify(
-      string.format("[Mason] Package '%s' not found.", mason_name),
+      string.format("[Lazy Install LSP] Package '%s' not found.", mason_name),
       vim.log.levels.ERROR
     )
 
@@ -34,12 +34,12 @@ local function ensure_installed(original_name)
     return
   end
 
-  vim.notify(string.format("[Mason] Installing '%s'...", mason_name), vim.log.levels.INFO)
+  vim.notify(string.format("[Lazy Install LSP] Installing '%s'...", mason_name), vim.log.levels.INFO)
 
   pkg:install():once("closed", function()
     if pkg:is_installed() then
       vim.schedule(function()
-        vim.notify(string.format("[Mason] '%s' installed. Reloading...", mason_name), vim.log.levels.INFO)
+        vim.notify(string.format("[Lazy Install LSP] '%s' installed. Reloading...", mason_name), vim.log.levels.INFO)
         vim.cmd("edit")
       end)
     end
@@ -62,7 +62,7 @@ vim.api.nvim_create_autocmd("FileType", {
 
     if not tools then
       vim.notify(
-        string.format("[Mason] No tools configured for filetype '%s'", vim.bo.filetype),
+        string.format("[Lazy Install LSP] No tools configured for filetype '%s'", vim.bo.filetype),
         vim.log.levels.INFO
       )
       return
