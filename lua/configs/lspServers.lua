@@ -32,4 +32,5 @@ return {
   json = { "jsonls" },
   jsonc = { "jsonls" },
   java = { "java_language_server" },
+  typst = { "tinymist" }
 }
