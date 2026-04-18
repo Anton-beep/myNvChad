@@ -28,6 +28,9 @@ require("lazy").setup({
 -- lazy download lsps
 require "configs.lazyInstallLsps"
 
+-- auto install treesitter parsers
+require "configs.treeSitterAutoInstall"
+
 -- load theme
 dofile(vim.g.base46_cache .. "defaults")
 dofile(vim.g.base46_cache .. "statusline")
@@ -38,3 +41,4 @@ require "nvchad.autocmds"
 vim.schedule(function()
   require "mappings"
 end)
+

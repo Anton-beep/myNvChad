@@ -34,4 +34,5 @@ return {
   java = { "java_language_server" },
   typst = { "tinymist" },
   tex = { "texlab" },
+  yaml = { "yamlls" },
 }
