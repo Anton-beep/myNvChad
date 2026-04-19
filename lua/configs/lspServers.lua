@@ -35,4 +35,5 @@ return {
   typst = { "tinymist" },
   tex = { "texlab" },
   yaml = { "yamlls" },
+  markdown = { "marksman" },
 }
