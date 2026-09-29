@@ -2,43 +2,54 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove every nvchad-origin plugin (NvChad starter, nvchad/ui, base46, volt, menu, minty) from this config, replacing load-bearing pieces with standalone plugins or inlined code. Visual details may change; core editing behavior must survive.
+**Goal:** Remove every nvchad-origin repo (NvChad starter, nvchad/ui, base46, volt, menu, minty) from this config with NO replacement plugins. nvim must stay fully functioning; features provided by nvchad/ui are simply lost; appearance changes (builtin colorscheme, builtin statusline). Standalone third-party plugins the user already uses (telescope, gitsigns, indent-blankline, which-key, nvim-web-devicons, plenary) are kept by adopting their specs into `lua/plugins/` — they are not nvchad components and not new additions.
 
-**Architecture:** Five incrementally-bootable tasks. First make the user's `configs/` fragments self-contained (LSP, cmp) while NvChad still boots, then add replacement plugin specs (theme, statusline, bufferline, terminals, telescope, gitsigns, …), then do the one big cutover commit that deletes `nvchad.plugins` import + `chadrc.lua`, and finally regenerate `lazy-lock.json` and verify headlessly. Every commit leaves `nvim --headless +qa` clean.
+**Architecture:** Five incrementally-bootable tasks. First make the user's `configs/` fragments self-contained (LSP, cmp) while NvChad still boots, then adopt the specs of orphaned standalone plugins (previously injected by `nvchad.plugins`), then do the cutover commit that deletes the `nvchad.plugins` import + `chadrc.lua` + all base46 cache dofiles, and finally regenerate `lazy-lock.json` and verify headlessly. Every commit leaves `nvim --headless +qa` clean.
 
-**Tech Stack:** Neovim 0.12.5, lazy.nvim (stable), nvim-cmp, nvim-lspconfig (vim.lsp.config API), nvim-treesitter **main branch (2025 rewrite — `setup()` only accepts `install_dir`; old `auto_install`/`highlight` opts are silently ignored)**, lualine, bufferline.nvim, toggleterm.nvim, echasnovski/neovim-ayu.
+**Tech Stack:** Neovim 0.12.5, lazy.nvim (stable), nvim-cmp, nvim-lspconfig (vim.lsp.config API), nvim-treesitter **main branch (2025 rewrite — `setup()` only accepts `install_dir`; old `auto_install`/`highlight` opts are silently ignored)**, telescope, gitsigns, indent-blankline, which-key. Colorscheme after cutover: builtin `habamax`.
 
-**Spec:** User decision from conversation (2026-09-29): "Just remove current dependency on nvchad completely, so that nvim config may change, maybe even lose some functionality. For this change create a separate branch from main and do the work there." Branch `remove-nvchad` already created from `main`.
+**Spec:** User decisions from conversation (2026-09-29): (1) "Just remove current dependency on nvchad completely, so that nvim config may change, maybe even lose some functionality. For this change create a separate branch from main and do the work there." (2) "don't even add replacements now, just remove the nvchad components, so that nvim still will be functioning, but maybe with less features, not same appearance." Branch `remove-nvchad` already created from `main`.
 
 ## Global Constraints
 
 - Work ONLY on branch `remove-nvchad` (already checked out).
+- **Do not add any plugin that is not already in `lazy-lock.json` at the branch point.** No lualine, no bufferline, no toggleterm, no ayu theme, nothing new.
+- Remove only nvchad-origin repos: `NvChad/NvChad`, `nvchad/ui`, `nvchad/base46`, `nvzone/volt`, `nvzone/menu`, `nvzone/minty`.
 - After every task, `nvim --headless +qa 2>&1` must print nothing (no errors).
 - Final state: `grep -rn -e nvchad -e base46 -e chadrc -e nvconfig init.lua lua/` returns zero hits.
-- Preserve user's own behavior: `<CR>` confirm `select = false`, `preselect = None`, Tab fallback (do NOT luasnip-jump on Tab), semanticTokens re-enabled, `relativenumber`, neovide settings, all `lua/plugins/*` specs the user wrote, `configs/lazyInstallLsps.lua`, `configs/lspServers.lua`, `configs/fixDockerComposeFiletype.lua`, `configs/pendulumConfig.lua`, opencode mappings.
+- Preserve user's own behavior: `<CR>` confirm `select = false`, `preselect = None`, Tab fallback (do NOT luasnip-jump on Tab), semanticTokens re-enabled, `relativenumber`, neovide settings, all `lua/plugins/*` specs the user wrote (except the rewrites/modifications explicitly listed in Tasks 2–3), `configs/lazyInstallLsps.lua`, `configs/lspServers.lua`, `configs/fixDockerComposeFiletype.lua`, `configs/pendulumConfig.lua`, opencode mappings (kept verbatim even though no opencode plugin is installed — pre-existing state, out of scope).
 - Do not touch `lazy-lock.json` by hand — regenerate via nvim.
 - `vim.treesitter.start` must keep being hooked on FileType (this, not treesitter opts, is what enables highlighting with the rewrite).
+- Pre-existing quirks left as-is (do NOT "fix" them): `conform` and `pendulum-nvim` specs have no lazy-load handler under `defaults.lazy=true`, so their `opts`/`config` never ran before the purge either; the specs are untouched, so whatever their load behavior is today is preserved exactly.
 
 ## Verified inventory (what NvChad actually supplies here)
 
 From reading `~/.local/share/nvim/lazy/NvChad/lua/nvchad/` (v2.5, commit d042cc97):
 
 - `nvchad.plugins` — default spec list: plenary, base46, ui, volt, menu, minty, nvim-web-devicons (with `nvchad.icons.devicons` override), indent-blankline, nvim-tree, which-key, conform (stylua), gitsigns, mason, nvim-lspconfig, nvim-cmp (+ LuaSnip, friendly-snippets, nvim-autopairs, cmp_luasnip, cmp-nvim-lua, cmp-nvim-lsp, cmp-buffer, cmp-async-path), telescope, nvim-treesitter.
-- `nvchad.options` (~57 lines), `nvchad.mappings` (~109 lines), `nvchad.autocmds` (User `FilePost` event, FileType→`vim.treesitter.start`, `TSInstallAll` cmd, editorconfig shim).
+- `nvchad.options` (~57 lines), `nvchad.mappings` (~109 lines), `nvchad.autocmds` (User `FilePost` event, FileType→`vim.treesitter.start`, `TSInstallAll` cmd, editorconfig shim — redundant, nvim 0.12 handles editorconfig natively).
 - `nvchad.configs.{cmp,lspconfig,telescope,treesitter,mason,luasnip,nvimtree,gitsigns}` — opts tables.
-- From `nvchad/ui`: statusline, tabufline, NvDash (NOT enabled — `load_on_startup` commented out in chadrc and defaults to false), NvCheatsheet, term system, theme switcher, NvRenamer, `nvchad.lsp.diagnostic_config`, `nvconfig` (reads `chadrc.lua`), `colors/nvchad.lua`, telescope extensions `themes`/`terms`.
+- From `nvchad/ui`: statusline, tabufline, NvDash (NOT enabled — `load_on_startup` commented out in chadrc, defaults false), NvCheatsheet, term system, theme switcher, NvRenamer, `nvchad.lsp.diagnostic_config`, `nvconfig` (reads `chadrc.lua`), `colors/nvchad.lua`, telescope extensions `themes`/`terms`.
 - Already-dead code (verified): `nvchad.configs.lspconfig.defaults()` is fully shadowed by user's `configs/lspconfig.lua` (its `lua_ls` workspace settings and semanticTokens-disabling `on_init` never ran); telescope `extensions_list` is consumed by nothing; treesitter `auto_install/highlight/indent` opts are ignored by the main-branch rewrite.
+- Load-graph facts that shape the plan: nvim-lspconfig today loads via NvChad's `event = "User FilePost"`; gitsigns and indent-blankline also lazy-load on `User FilePost` (an event that disappears with NvChad — Task 3 must re-home them on real events); cmp loads on NvChad's `event = "InsertEnter"` (Task 2 preserves it); `plenary` is required at runtime by telescope, lazygit (declares it itself), and none-ls (does NOT declare it) — after the purge it must stay referenced somewhere or `:Lazy! sync` prunes it and none-ls breaks (Task 3 declares it as a telescope dependency).
 
-## Known, accepted behavior changes (user approved losing functionality)
+## Known, accepted losses (user approved: "less features, not same appearance")
 
-- Theme: base46 `ayu_dark` → neovim-ayu `ayu-dark` (close palette, not identical). No transparency, no theme_toggle.
-- Statusline/tabufline → lualine + bufferline.nvim (different look). Tabufline's smart `close_buffer` → plain `:bdelete`.
-- NvCheatsheet grid → `:WhichKey`; NvRenamer popup → native `vim.lsp.buf.rename`.
-- Toggleable terminals → toggleterm.nvim; telescope `terms` picker dropped.
-- cmp entry icons (ui's `nvchad.cmp` formatting) → plain text.
-- Signature help: Neovim 0.11+ ships builtin `lsp_signature` runtime plugin — nothing to configure (verify in Task 5).
-- editorconfig: handled natively by 0.12; NvChad's manual shim was redundant.
+- base46 theming / `ayu_dark` → builtin `habamax`. No transparency, no theme_toggle, no nvchad theme switcher (`<leader>th` becomes `Telescope colorscheme` over builtin schemes).
+- nvchad statusline → nvim builtin statusline (`laststatus = 3` keeps the single global line).
+- nvchad tabufline → nothing; `<tab>`/`<S-tab>` remap to builtin `:bnext`/`:bprevious`, `<leader>x` to `:bdelete` (builtin commands, no plugin).
+- nvchad toggleable terminals (`<A-i>`, `<A-h>`, `<A-v>`, `<leader>h`, `<leader>v`) → gone; builtin `:terminal` remains. The `t` `<C-x>` escape mapping stays.
+- Telescope `terms` picker (`<leader>pt`) → gone (extension lived in nvchad/ui).
+- NvCheatsheet grid (`<leader>ch`) → `:WhichKey` (which-key is kept).
+- NvRenamer popup (`<leader>ra`) → native `vim.lsp.buf.rename`.
+- Auto-popup LSP signature help (nvchad/ui) → gone; `vim.lsp.buf.signature_help` still available on demand (no mapping).
+- cmp entry icons (ui's `nvchad.cmp` formatting) → plain text entries.
+- `TSInstallAll` command → gone (use `:TSInstall`).
 - Treesitter `auto_install` no longer exists in the rewrite (the old setting was silently ignored anyway) — a base parser set installs explicitly, others via `:TSInstall`.
+
+## Kept (existing standalone plugins — specs adopted in Task 3, nothing new installed)
+
+telescope.nvim (+ plenary), gitsigns.nvim, indent-blankline.nvim, which-key.nvim, nvim-web-devicons — plus everything the user already specced: nvim-tree, conform, mason/mason-lspconfig/nvim-lspconfig, nvim-cmp stack, none-ls + cspell, dressing, lazygit, pendulum-nvim, rainbow-delimiters, nvim-treesitter.
 
 ---
 
@@ -177,7 +188,7 @@ git commit -m "lsp: make configs/lspconfig.lua standalone (no nvchad.configs.lsp
 
 **Interfaces:**
 - Consumes: `configs.nvimCmp` returns the nvim-cmp opts table.
-- Produces: nvim-cmp spec loading on `InsertEnter` with LuaSnip (vscode loaders + #258 fix, inlined from `nvchad.configs.luasnip`), nvim-autopairs wired to cmp `confirm_done`, and sources `nvim_lsp, luasnip, buffer, nvim_lua, async_path`.
+- Produces: nvim-cmp spec loading on `InsertEnter` with LuaSnip (vscode loaders + #258 fix, inlined from `nvchad.configs.luasnip`), nvim-autopairs wired to cmp `confirm_done`, and sources `nvim_lsp, luasnip, buffer, nvim_lua, async_path`. All plugins already in `lazy-lock.json` — nothing new installed.
 
 - [ ] **Step 1: Rewrite `lua/configs/nvimCmp.lua`** with exactly:
 
@@ -319,13 +330,11 @@ git commit -m "cmp: standalone nvim-cmp spec and config, drop nvchad.configs.cmp
 
 ---
 
-### Task 3: Add replacement plugin specs
+### Task 3: Adopt orphaned standalone plugins (NO new plugins)
+
+These plugins already exist in `lazy-lock.json` and the user already uses them via mappings; only their specs were injected by `nvchad.plugins`. This task re-homes those specs into `lua/plugins/`. It also re-homes lazy-load triggers that referenced NvChad's `User FilePost` event (which disappears in Task 4) onto real Neovim events, and declares `plenary` explicitly so `:Lazy! sync` in Task 5 does not prune it (none-ls requires it at runtime but never declared it).
 
 **Files:**
-- Create: `lua/plugins/ayu.lua`
-- Create: `lua/plugins/lualine.lua`
-- Create: `lua/plugins/bufferline.lua`
-- Create: `lua/plugins/toggleterm.lua`
 - Create: `lua/plugins/telescope.lua`
 - Create: `lua/plugins/gitsigns.lua`
 - Create: `lua/plugins/indentBlankline.lua`
@@ -333,87 +342,15 @@ git commit -m "cmp: standalone nvim-cmp spec and config, drop nvchad.configs.cmp
 - Create: `lua/plugins/devicons.lua`
 - Modify: `lua/plugins/mason-lspconfig.lua` (add mason opts inlined from `nvchad.configs.mason`)
 - Modify: `lua/plugins/treeSitter.lua` (rewrite for the nvim-treesitter main-branch API; carries the FileType→`vim.treesitter.start` hook that `nvchad.autocmds` used to provide)
+- Modify: `lua/plugins/init.lua` (give nvim-lspconfig an explicit event — it previously loaded via NvChad's `User FilePost`)
 
 **Interfaces:**
 - Consumes: nothing new.
-- Produces: plugin specs named `echasnovski/neovim-ayu` (colorscheme `ayu-dark`), `nvim-lualine/lualine.nvim`, `akinsho/bufferline.nvim` (commands `BufferLineCycleNext/Prev` used by Task 4 mappings), `akinsho/toggleterm.nvim` (command `ToggleTerm` with `direction=` used by Task 4 mappings), `nvim-telescope/telescope.nvim`, `lewis6991/gitsigns.nvim`, `lukas-reineke/indent-blankline.nvim`, `folke/which-key.nvim`, `nvim-tree/nvim-web-devicons`.
+- Produces: plugin specs named `nvim-telescope/telescope.nvim` (with `nvim-lua/plenary.nvim` dependency; command `Telescope` used by Task 4 mappings), `lewis6991/gitsigns.nvim`, `lukas-reineke/indent-blankline.nvim` (`main = "ibl"`), `folke/which-key.nvim` (commands `WhichKey` used by Task 4 mappings), `nvim-tree/nvim-web-devicons`.
 
-Note: during this task the NvChad import is still active; lazy.nvim merges same-name specs (ours wins), and the new specs simply coexist. Theme will be transiently mixed (base46 highlights re-applied after setup) — accepted transitional state, resolved in Task 4.
+Note: during this task the NvChad import is still active; lazy.nvim merges same-name specs (ours wins), so behavior is unchanged — only trigger sources are duplicated harmlessly.
 
-- [ ] **Step 1: Create `lua/plugins/ayu.lua`**
-
-```lua
-return {
-  "echasnovski/neovim-ayu",
-  lazy = false,
-  priority = 1000,
-  config = function()
-    require("ayu").setup {
-      mirage = false,
-      terminal = true,
-      overrides = {},
-    }
-    vim.cmd "colorscheme ayu-dark"
-  end,
-}
-```
-
-- [ ] **Step 2: Create `lua/plugins/lualine.lua`**
-
-```lua
-return {
-  "nvim-lualine/lualine.nvim",
-  lazy = false,
-  dependencies = { "nvim-tree/nvim-web-devicons" },
-  opts = {
-    options = {
-      theme = "ayu",
-      globalstatus = true,
-    },
-  },
-}
-```
-
-- [ ] **Step 3: Create `lua/plugins/bufferline.lua`**
-
-```lua
-return {
-  "akinsho/bufferline.nvim",
-  version = "*",
-  lazy = false,
-  dependencies = { "nvim-tree/nvim-web-devicons" },
-  opts = {
-    options = {
-      mode = "buffers",
-      offsets = {
-        {
-          filetype = "NvimTree",
-          text = "File Explorer",
-          text_align = "center",
-          separator = true,
-        },
-      },
-    },
-  },
-}
-```
-
-- [ ] **Step 4: Create `lua/plugins/toggleterm.lua`**
-
-```lua
-return {
-  "akinsho/toggleterm.nvim",
-  version = "*",
-  cmd = { "ToggleTerm", "ToggleTermToggleAll" },
-  opts = {
-    open_mapping = false, -- mapped manually in lua/mappings.lua
-    direction = "float",
-    float_opts = { border = "single" },
-  },
-}
-```
-
-- [ ] **Step 5: Create `lua/plugins/telescope.lua`** (defaults inlined from `nvchad.configs.telescope`; `extensions_list` dropped — nothing consumed it; opts as a function so `require("telescope.actions")` resolves only after telescope is in rtp)
+- [ ] **Step 1: Create `lua/plugins/telescope.lua`** (defaults inlined from `nvchad.configs.telescope`; `extensions_list` dropped — nothing consumed it, and the `themes`/`terms` extensions lived in nvchad/ui; opts as a function so `require("telescope.actions")` resolves only after telescope is in rtp; plenary declared so it survives Task 5's sync-prune)
 
 ```lua
 return {
@@ -444,7 +381,7 @@ return {
 }
 ```
 
-- [ ] **Step 6: Create `lua/plugins/gitsigns.lua`** (replaces lazy-loading on NvChad's `User FilePost` with real events; opts inlined from `nvchad.configs.gitsigns`)
+- [ ] **Step 2: Create `lua/plugins/gitsigns.lua`** (was `event = "User FilePost"` from NvChad — re-homed on real events; opts inlined from `nvchad.configs.gitsigns`; glyph signs render fine without base46)
 
 ```lua
 return {
@@ -459,7 +396,7 @@ return {
 }
 ```
 
-- [ ] **Step 7: Create `lua/plugins/indentBlankline.lua`** (base46-specific `IblChar`/`IblScopeChar` highlights dropped — ibl defines its own defaults)
+- [ ] **Step 3: Create `lua/plugins/indentBlankline.lua`** (was `event = "User FilePost"`; base46-specific `IblChar`/`IblScopeChar` highlights and the hide-first-space hook dropped — ibl defines its own defaults)
 
 ```lua
 return {
@@ -473,7 +410,7 @@ return {
 }
 ```
 
-- [ ] **Step 8: Create `lua/plugins/whichkey.lua`**
+- [ ] **Step 4: Create `lua/plugins/whichkey.lua`** (trigger list from NvChad's spec)
 
 ```lua
 return {
@@ -484,7 +421,7 @@ return {
 }
 ```
 
-- [ ] **Step 9: Create `lua/plugins/devicons.lua`** (plain; the `nvchad.icons.devicons` override is gone)
+- [ ] **Step 5: Create `lua/plugins/devicons.lua`** (plain; the `nvchad.icons.devicons` override is gone. Needed by nvim-tree and telescope for icons — without it they fall back to text glyphs)
 
 ```lua
 return {
@@ -493,7 +430,7 @@ return {
 }
 ```
 
-- [ ] **Step 10: Rewrite `lua/plugins/mason-lspconfig.lua`** (mason opts inlined from `nvchad.configs.mason`; `PATH = "skip"` is safe because Task 4's options.lua prepends mason/bin to PATH)
+- [ ] **Step 6: Rewrite `lua/plugins/mason-lspconfig.lua`** (mason opts inlined from `nvchad.configs.mason`; `PATH = "skip"` is safe because Task 4's options.lua prepends mason/bin to PATH)
 
 ```lua
 return {
@@ -522,7 +459,7 @@ return {
 }
 ```
 
-- [ ] **Step 11: Rewrite `lua/plugins/treeSitter.lua`** (main-branch rewrite API: `setup{}` accepts only `install_dir`; highlighting comes from `vim.treesitter.start` on FileType, previously provided by `nvchad.autocmds`; explicit base parser install replaces the dead `auto_install` opt)
+- [ ] **Step 7: Rewrite `lua/plugins/treeSitter.lua`** (main-branch rewrite API: `setup{}` accepts only `install_dir`; highlighting comes from `vim.treesitter.start` on FileType, previously provided by `nvchad.autocmds`; explicit base parser install replaces the dead `auto_install` opt; drops the base46 dofile calls)
 
 ```lua
 return {
@@ -537,6 +474,7 @@ return {
     require("nvim-treesitter").install { "lua", "luadoc", "printf", "vim", "vimdoc" }
 
     -- enable highlighting when a parser is available
+    -- (replaces the FileType hook that nvchad.autocmds provided)
     vim.api.nvim_create_autocmd("FileType", {
       pattern = "*",
       callback = function(args)
@@ -547,19 +485,41 @@ return {
 }
 ```
 
-- [ ] **Step 12: Verify**
+- [ ] **Step 8: In `lua/plugins/init.lua`, add an explicit event to the nvim-lspconfig spec** (it previously loaded via NvChad's `User FilePost` event; make the trigger ours). Replace the lspconfig block so the file reads:
+
+```lua
+return {
+  {
+    "stevearc/conform.nvim",
+    -- event = 'BufWritePre', -- uncomment for format on save
+    opts = require "configs.conform",
+  },
+
+  {
+    "neovim/nvim-lspconfig",
+    event = { "BufReadPre", "BufNewFile" },
+    config = function()
+      require "configs.lspconfig"
+    end,
+  },
+}
+```
+
+(Delete the commented-out treesitter example block at the bottom while here — it documents the old master-branch opts API that no longer exists.)
+
+- [ ] **Step 9: Verify**
 
 Run: `nvim --headless +qa 2>&1`
-Expected: empty (first run clones the new plugins — needs network; if a clone fails, fix the spec, do not proceed).
+Expected: empty (no cloning — every plugin is already installed).
 
-Run: `nvim --headless "+lua print(vim.fn.exists(':ToggleTerm') .. vim.fn.exists(':BufferLineCycleNext') .. vim.fn.exists(':Telescope'))" +qa`
-Expected: `222` (`exists(':Cmd')` returns 2 for user commands).
+Run: `nvim --headless "+lua print(vim.fn.exists(':Telescope') .. vim.fn.exists(':WhichKey') .. tostring(require('lazy.core.config').plugins['gitsigns.nvim'] ~= nil))" +qa`
+Expected: `22true` (`exists(':Cmd')` returns 2 for user commands; gitsigns is event-lazy so it is checked via lazy's spec registry, not a command).
 
-- [ ] **Step 13: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
-git add lua/plugins/ayu.lua lua/plugins/lualine.lua lua/plugins/bufferline.lua lua/plugins/toggleterm.lua lua/plugins/telescope.lua lua/plugins/gitsigns.lua lua/plugins/indentBlankline.lua lua/plugins/whichkey.lua lua/plugins/devicons.lua lua/plugins/mason-lspconfig.lua lua/plugins/treeSitter.lua
-git commit -m "plugins: add standalone replacements (ayu, lualine, bufferline, toggleterm, telescope, gitsigns, ibl, which-key, devicons); treesitter main-branch API"
+git add lua/plugins/telescope.lua lua/plugins/gitsigns.lua lua/plugins/indentBlankline.lua lua/plugins/whichkey.lua lua/plugins/devicons.lua lua/plugins/mason-lspconfig.lua lua/plugins/treeSitter.lua lua/plugins/init.lua
+git commit -m "plugins: adopt orphaned standalone specs (telescope+plenary, gitsigns, ibl, which-key, devicons); treesitter main-branch API"
 ```
 
 ---
@@ -568,15 +528,15 @@ git commit -m "plugins: add standalone replacements (ayu, lualine, bufferline, t
 
 **Files:**
 - Modify: `init.lua` (full rewrite)
-- Modify: `lua/options.lua` (inline `nvchad.options`)
-- Modify: `lua/mappings.lua` (inline `nvchad.mappings` with rewrites)
+- Modify: `lua/options.lua` (inline `nvchad.options`; set builtin colorscheme)
+- Modify: `lua/mappings.lua` (inline `nvchad.mappings`, drop nvchad-feature maps, use builtin buffer commands)
 - Modify: `lua/configs/lazy.lua` (install colorscheme)
 - Modify: `lua/configs/nvimtree.lua` (drop base46 dofile)
 - Delete: `lua/chadrc.lua`
 
 **Interfaces:**
-- Consumes: `BufferLineCycleNext/Prev`, `ToggleTerm` commands and `WhichKey` from Task 3.
-- Produces: a config whose only plugin source is `{ import = "plugins" }`; no `nvchad.*`, `base46`, `chadrc`, `nvconfig` references anywhere.
+- Consumes: `Telescope`, `WhichKey`, `NvimTreeToggle/Focus/Refresh` commands from kept plugins.
+- Produces: a config whose only plugin source is `{ import = "plugins" }`; no `nvchad.*`, `base46`, `chadrc`, `nvconfig` references anywhere; colorscheme is builtin `habamax`.
 
 - [ ] **Step 1: Rewrite `init.lua`** with exactly:
 
@@ -608,7 +568,7 @@ end)
 require "configs.lazyInstallLsps"
 ```
 
-- [ ] **Step 2: Rewrite `lua/options.lua`** with exactly:
+- [ ] **Step 2: Rewrite `lua/options.lua`** with exactly (nvchad.options inlined; builtin colorscheme since base46 is gone):
 
 ```lua
 local opt = vim.opt
@@ -671,6 +631,9 @@ vim.env.PATH = table.concat({ vim.fn.stdpath "data", "mason", "bin" }, sep) .. d
 -- user options
 o.relativenumber = true
 
+-- builtin colorscheme (base46 removed)
+vim.cmd "colorscheme habamax"
+
 if vim.g.neovide == true then
   vim.g.neovide_cursor_vfx_mode = "torpedo"
   vim.g.neovide_refresh_rate = 144
@@ -682,10 +645,10 @@ require "configs.fixDockerComposeFiletype"
 require "configs.pendulumConfig"
 ```
 
-- [ ] **Step 3: Rewrite `lua/mappings.lua`** with exactly (nvchad.mappings inlined; `tabufline` → bufferline commands, `nvchad.term` → ToggleTerm, `nvchad.themes` → telescope colorscheme, NvCheatsheet → WhichKey; user maps kept; `<leader>pt` telescope-terms dropped):
+- [ ] **Step 3: Rewrite `lua/mappings.lua`** with exactly (nvchad.mappings inlined; nvchad-specific targets replaced with builtin commands or kept plugins: buffer cycling → builtin `:bnext`/`:bprevious`, buffer close → `:bdelete`, theme switcher → `Telescope colorscheme`, NvCheatsheet → `:WhichKey`, NvRenamer → handled in Task 1's lspconfig; nvchad terminal maps and `<leader>pt` terms picker DROPPED; user maps kept verbatim):
 
 ```lua
--- inlined from nvchad.mappings, with nvchad-specific targets replaced
+-- inlined from nvchad.mappings, with nvchad-only targets replaced or dropped
 local map = vim.keymap.set
 
 map("i", "<C-b>", "<ESC>^i", { desc = "move beginning of line" })
@@ -716,10 +679,10 @@ end, { desc = "general format file" })
 -- global lsp mappings
 map("n", "<leader>ds", vim.diagnostic.setloclist, { desc = "LSP diagnostic loclist" })
 
--- buffers (bufferline.nvim; was nvchad tabufline)
+-- buffers (builtin commands; was nvchad tabufline)
 map("n", "<leader>b", "<cmd>enew<CR>", { desc = "buffer new" })
-map("n", "<tab>", "<cmd>BufferLineCycleNext<CR>", { desc = "buffer goto next" })
-map("n", "<S-tab>", "<cmd>BufferLineCyclePrev<CR>", { desc = "buffer goto prev" })
+map("n", "<tab>", "<cmd>bnext<CR>", { desc = "buffer goto next" })
+map("n", "<S-tab>", "<cmd>bprevious<CR>", { desc = "buffer goto prev" })
 map("n", "<leader>x", "<cmd>bdelete<CR>", { desc = "buffer close" })
 
 -- Comment (built-in since nvim 0.10)
@@ -739,7 +702,7 @@ map("n", "<leader>fz", "<cmd>Telescope current_buffer_fuzzy_find<CR>", { desc = 
 map("n", "<leader>cm", "<cmd>Telescope git_commits<CR>", { desc = "telescope git commits" })
 map("n", "<leader>gt", "<cmd>Telescope git_status<CR>", { desc = "telescope git status" })
 
--- was nvchad theme switcher
+-- was nvchad theme switcher; now builtin schemes via telescope
 map("n", "<leader>th", "<cmd>Telescope colorscheme<CR>", { desc = "pick colorscheme" })
 
 map("n", "<leader>ff", "<cmd>Telescope find_files<cr>", { desc = "telescope find files" })
@@ -750,15 +713,8 @@ map(
   { desc = "telescope find all files" }
 )
 
--- terminal (toggleterm.nvim; was nvchad.term)
+-- terminal (nvchad term maps dropped; builtin :terminal remains)
 map("t", "<C-x>", "<C-\\><C-N>", { desc = "terminal escape terminal mode" })
-
-map("n", "<leader>h", "<cmd>ToggleTerm direction=horizontal<CR>", { desc = "terminal new horizontal term" })
-map("n", "<leader>v", "<cmd>ToggleTerm direction=vertical<CR>", { desc = "terminal new vertical term" })
-
-map({ "n", "t" }, "<A-v>", "<cmd>ToggleTerm direction=vertical<CR>", { desc = "terminal toggleable vertical term" })
-map({ "n", "t" }, "<A-h>", "<cmd>ToggleTerm direction=horizontal<CR>", { desc = "terminal toggleable horizontal term" })
-map({ "n", "t" }, "<A-i>", "<cmd>ToggleTerm direction=float<CR>", { desc = "terminal toggle floating term" })
 
 -- whichkey
 map("n", "<leader>wK", "<cmd>WhichKey <CR>", { desc = "whichkey all keymaps" })
@@ -790,7 +746,7 @@ map("n", "<leader>od", function() require("opencode").command("session.half.page
   { desc = "Scroll opencode down" })
 ```
 
-- [ ] **Step 4: In `lua/configs/lazy.lua` change** `install = { colorscheme = { "nvchad" } },` **to** `install = { colorscheme = { "ayu-dark" } },`
+- [ ] **Step 4: In `lua/configs/lazy.lua` change** `install = { colorscheme = { "nvchad" } },` **to** `install = { colorscheme = { "habamax" } },` (builtin scheme — used by lazy only during fresh installs).
 
 - [ ] **Step 5: In `lua/configs/nvimtree.lua` delete line 1** (`dofile(vim.g.base46_cache .. "nvimtree")`).
 
@@ -802,20 +758,23 @@ Run: `grep -rn -e nvchad -e base46 -e chadrc -e nvconfig init.lua lua/ || echo C
 Expected: `CLEAN`.
 
 Run: `nvim --headless +qa 2>&1`
-Expected: empty (first boot without NvChad; lazy may reinstall/repair — must not error).
+Expected: empty (first boot without NvChad).
 
 Run: `nvim --headless "+lua print(vim.g.colors_name)" +qa`
-Expected: prints `ayu-dark` (or another `ayu*` value — record what prints; assert it is not empty and not `default`).
+Expected: prints `habamax`.
 
-Run: `nvim --headless "+lua print(vim.fn.maparg('<leader>x', 'n'))" +qa`
-Expected: output contains `bdelete`.
+Run: `nvim --headless "+lua print(vim.fn.maparg('<leader>x', 'n') ~= '' and vim.fn.maparg('<tab>', 'n') ~= '')" +qa`
+Expected: prints `true` (buffer close + cycle maps exist).
+
+Run: `nvim --headless "+lua print(vim.fn.exists(':Telescope') .. vim.fn.exists(':NvimTreeToggle'))" +qa`
+Expected: `22`.
 
 - [ ] **Step 8: Commit**
 
 ```bash
 git add init.lua lua/options.lua lua/mappings.lua lua/configs/lazy.lua lua/configs/nvimtree.lua
 git rm lua/chadrc.lua
-git commit -m "cutover: drop NvChad import, base46 caches and chadrc; inline options/mappings"
+git commit -m "cutover: drop NvChad import, base46 caches and chadrc; builtin colorscheme/statusline; inline options/mappings"
 ```
 
 ---
@@ -828,19 +787,20 @@ git commit -m "cutover: drop NvChad import, base46 caches and chadrc; inline opt
 
 **Interfaces:** none.
 
-- [ ] **Step 1: Regenerate the lockfile**
+- [ ] **Step 1: Regenerate the lockfile (this PRUNES the nvchad repos from `~/.local/share/nvim/lazy/`)**
 
 Run: `nvim --headless "+Lazy! sync" +qa 2>&1`
-Expected: completes silently. Then `git diff --stat lazy-lock.json` must show changes and `grep -c "NvChad\|base46\|\"ui\"\|volt\|menu\|minty" lazy-lock.json` must return `0`.
+Expected: completes silently. Then `git diff --stat lazy-lock.json` must show changes and `grep -c "NvChad\|base46\|\"ui\"\|\"volt\"\|\"menu\"\|\"minty\"" lazy-lock.json` must return `0`, while `grep -c "\"telescope.nvim\"\|\"gitsigns.nvim\"\|\"which-key.nvim\"\|\"plenary.nvim\"" lazy-lock.json` must return `4` (kept plugins survived the prune).
 
 - [ ] **Step 2: Update `README.md`** — replace the title/intro so it no longer presents this as a myNvChad install (clone URLs stay valid). Result should read:
 
 ````markdown
 # my nvim config
 
-Standalone Neovim config (no NvChad): lazy.nvim, nvim-lspconfig + mason, nvim-cmp,
-treesitter (main branch), telescope, nvim-tree, lualine + bufferline, toggleterm,
-conform, gitsigns, ayu theme.
+Standalone Neovim config (NvChad removed): lazy.nvim, mason + nvim-lspconfig,
+nvim-cmp, treesitter (main branch), telescope, nvim-tree, gitsigns,
+indent-blankline, which-key, conform, none-ls (cspell). Builtin colorscheme
+(habamax) and statusline.
 
 # Install
 ## Linux
@@ -880,13 +840,13 @@ Run each; expected in brackets:
 ```bash
 nvim --headless +qa 2>&1                                  # [empty]
 nvim --headless "+Lazy! check" +qa 2>&1                   # [no errors about our specs]
-nvim --headless "+lua print(vim.g.colors_name)" +qa       # [ayu*]
+nvim --headless "+lua print(vim.g.colors_name)" +qa       # [habamax]
 grep -rn -e nvchad -e base46 -e chadrc -e nvconfig init.lua lua/ # [no hits]
 grep -c "NvChad\|base46" lazy-lock.json                   # [0]
 git status --short                                        # [only README/lazy-lock staged or clean]
 ```
 
-Then an interactive smoke test by the user: open a file (treesitter colors, gitsigns gutter), `<C-n>` tree, `<leader>ff` telescope, `<A-i>` floating term, `<leader>x` buffer close, edit a Lua file for cmp + lua_ls hover/rename.
+Then an interactive smoke test by the user: open a Lua file (treesitter highlighting, cmp completion, `gd`/`K`/`<leader>ra` via lua_ls), `<C-n>` tree, `<leader>ff` telescope, `<tab>`/`<S-tab>` buffer cycling, `<leader>x` buffer close, gitsigns gutter in a git repo.
 
 - [ ] **Step 4: Commit**
 
@@ -899,4 +859,4 @@ git commit -m "post-purge: regenerate lazy-lock, update README"
 
 ## Rollback
 
-Branch `remove-nvchad` only; `main` is untouched. Any broken intermediate state: `git checkout -- .` or `git switch main`. NvChad plugin dirs stay in `~/.local/share/nvim/lazy/` until lazy prunes them — if the transitional states bother you, `:Lazy clean` removes unused plugins (run only after Task 4).
+Branch `remove-nvchad` only; `main` is untouched. Any broken intermediate state: `git checkout -- .` or `git switch main`. Note: Task 5's `:Lazy! sync` deletes the NvChad plugin dirs from `~/.local/share/nvim/lazy/` — to restore them after switching back to `main`, run `nvim --headless "+Lazy! sync" +qa` there (and `nvim --headless "+Lazy! restore" +qa` if the lockfile drifted).
