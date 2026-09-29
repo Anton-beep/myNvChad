@@ -9,10 +9,6 @@ map("i", "jk", "<ESC>")
 
 -- map({ "n", "i", "v" }, "<C-s>", "<cmd> w <cr>")
 
-map("i", "<C-l>", function()
-  vim.fn.feedkeys(vim.fn["copilot#Accept"](), "")
-end, { desc = "Copilot Accept", noremap = true, silent = true })
-
 map("n", "sh", ":split<CR>", { desc = "Split Horizontal", noremap = true, silent = true })
 map("n", "sv", ":vsplit<CR>", { desc = "Split Vertical", noremap = true, silent = true })
 
