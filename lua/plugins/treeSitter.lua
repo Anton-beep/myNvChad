@@ -1,21 +1,21 @@
 return {
   "nvim-treesitter/nvim-treesitter",
-  lazy = true,
+  lazy = false,
+  branch = "main",
+  build = ":TSUpdate",
   config = function()
-    pcall(function()
-      dofile(vim.g.base46_cache .. "syntax")
-      dofile(vim.g.base46_cache .. "treesitter")
-    end)
+    require("nvim-treesitter").setup {}
 
-    require("nvim-treesitter.config").setup {
-      auto_install = true,
-      highlight = {
-        enable = true,
-        use_languagetree = true,
-      },
-      indent = {
-        enable = true,
-      },
-    }
+    -- base parser set; more via :TSInstall
+    require("nvim-treesitter").install { "lua", "luadoc", "printf", "vim", "vimdoc" }
+
+    -- enable highlighting when a parser is available
+    -- (replaces the FileType hook the old config provided)
+    vim.api.nvim_create_autocmd("FileType", {
+      pattern = "*",
+      callback = function(args)
+        pcall(vim.treesitter.start, args.buf)
+      end,
+    })
   end,
 }
