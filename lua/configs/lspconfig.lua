@@ -84,10 +84,9 @@ vim.lsp.config("lua_ls", {
 })
 
 -- lsps with default config
-for _, lspServers in ipairs(servers) do
-  for _, lsp in ipairs(lspServers) do
+for _, server_list in pairs(servers) do
+  for _, lsp in ipairs(server_list) do
     vim.lsp.config(lsp, {
-      on_attach = on_attach,
       capabilities = capabilities,
     })
 
