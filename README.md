@@ -1,3 +1,10 @@
+# my nvim config
+
+Standalone Neovim config (NvChad removed): lazy.nvim, mason + nvim-lspconfig,
+nvim-cmp, treesitter (main branch), telescope, nvim-tree, gitsigns,
+indent-blankline, which-key, conform, none-ls (cspell). Builtin colorscheme
+(habamax) and statusline.
+
 # Install
 ## Linux
 ### Removing Existing nvim Config
