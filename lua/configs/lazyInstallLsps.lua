@@ -53,16 +53,26 @@ local ignored_filtypes = {
 }
 
 vim.api.nvim_create_autocmd("FileType", {
-  callback = function()
-    if ignored_filtypes[vim.bo.filetype] then
+  callback = function(args)
+    local buf = args.buf
+
+    -- UI popups are not files: noice, NvMenu/VoltWindow, the tree, prompts and terminals all fire
+    -- FileType too, and there is nothing to install (or to report) for them. Only act on buffers
+    -- that stand for a file on disk -- special buffers (buftype set) and unnamed scratch buffers
+    -- are skipped, whatever filetype they carry.
+    if vim.bo[buf].buftype ~= "" or vim.api.nvim_buf_get_name(buf) == "" then
       return
     end
 
-    local tools = filetype_tools[vim.bo.filetype]
+    if ignored_filtypes[vim.bo[buf].filetype] then
+      return
+    end
+
+    local tools = filetype_tools[vim.bo[buf].filetype]
 
     if not tools then
       vim.notify(
-        string.format("[Lazy Install LSP] No tools configured for filetype '%s'", vim.bo.filetype),
+        string.format("[Lazy Install LSP] No tools configured for filetype '%s'", vim.bo[buf].filetype),
         vim.log.levels.INFO
       )
       return
