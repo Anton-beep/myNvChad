@@ -2,8 +2,15 @@
 
 Standalone Neovim config (NvChad removed): lazy.nvim, mason + nvim-lspconfig,
 nvim-cmp, treesitter (main branch), telescope, nvim-tree, gitsigns,
-indent-blankline, which-key, conform, none-ls (cspell). Builtin colorscheme
-(habamax) and statusline.
+indent-blankline, which-key, conform, none-ls (cspell), render-markdown (in-place
+markdown rendering), noice (cmdline/messages/popupmenu UI), bufferline (tabline of
+open buffers). Builtin colorscheme (habamax); lualine.nvim statusline.
+
+Semantic-token highlighting (`lua/configs/semanticTokens.lua`) gives ten variable
+kinds their own colours (locals, const locals, parameters, const parameters, data
+members, const members, statics, globals, enum members, template parameters) while
+functions, types, macros, strings and comments keep the colorscheme's colours. The
+palette is derived from the active colorscheme, so switching themes re-tunes it.
 
 # Install
 ## Linux
