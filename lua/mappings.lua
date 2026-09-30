@@ -52,6 +52,9 @@ map("n", "<leader>fz", "<cmd>Telescope current_buffer_fuzzy_find<CR>", { desc = 
 map("n", "<leader>cm", "<cmd>Telescope git_commits<CR>", { desc = "telescope git commits" })
 map("n", "<leader>gt", "<cmd>Telescope git_status<CR>", { desc = "telescope git status" })
 
+-- diffview (git diffs, merge conflicts, file history)
+map("n", "<leader>gd", "<cmd>DiffviewOpen<CR>", { desc = "git diff against index (diffview)" })
+
 -- theme switcher (themery: list of every colourscheme, live preview, persists the pick)
 map("n", "<leader>th", "<cmd>Themery<CR>", { desc = "pick theme (themery)" })
 
