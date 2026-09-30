@@ -1,13 +1,13 @@
 return {
   "folke/noice.nvim",
-  -- replaces the UI for the cmdline, messages and the completion popup;
-  -- VeryLazy keeps it off the startup path while still catching later output
   event = "VeryLazy",
   dependencies = { "MunifTanjim/nui.nvim" },
   opts = {
     lsp = {
-      -- render markdown in hover docs, signature help and cmp documentation
-      -- through treesitter instead of plain text
+      -- none-ls (cspell) re-announces every diagnostics run as LSP progress (begin/report/end),
+      -- which noice's mini view renders as a "diagnostics null-ls" popup on every edit/save.
+      -- With this off, Nvim's default handler keeps the raw progress and noice stops drawing it.
+      progress = { enabled = false },
       override = {
         ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
         ["vim.lsp.util.stylize_markdown"] = true,
@@ -15,14 +15,11 @@ return {
       },
     },
     presets = {
-      bottom_search = true, -- classic cmdline at the bottom for / and ?
-      command_palette = true, -- cmdline and completion popup sit together
-      long_message_to_split = true, -- long messages open in a split
+      bottom_search = true,
+      command_palette = true,
+      long_message_to_split = true,
     },
     views = {
-      -- notifications are drawn by the mini view here (views.notify tries the snacks/nvim-notify
-      -- backends first and both are absent), so this is the knob that decides how long they stay.
-      -- 10 s instead of the 2 s default, which was gone before it could be read.
       mini = { timeout = 10000 },
     },
   },
