@@ -69,3 +69,4 @@ end
 
 require "configs.fixDockerComposeFiletype"
 require "configs.pendulumConfig"
+require "configs.semanticTokens"
