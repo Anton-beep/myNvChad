@@ -1,7 +1,8 @@
 # my nvim config
 
 Standalone Neovim config (NvChad removed): lazy.nvim, mason + nvim-lspconfig,
-nvim-cmp, treesitter (main branch), telescope, nvim-tree, gitsigns,
+nvim-cmp, treesitter (main branch), telescope, nvim-tree, gitsigns, diffview
+(diffs, merge conflicts, file history),
 indent-blankline, which-key, conform, none-ls (cspell), render-markdown (in-place
 markdown rendering), noice (cmdline/messages/popupmenu UI), bufferline (tabline of
 open buffers). Theme collection: base16-nvim (`:colorscheme base16-*`) with themery
