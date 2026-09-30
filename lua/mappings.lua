@@ -42,6 +42,20 @@ map("v", "<leader>/", "gc", { desc = "toggle comment", remap = true })
 -- nvimtree
 map("n", "<C-n>", "<cmd>NvimTreeToggle<CR>", { desc = "nvimtree toggle window" })
 
+-- menu (popup menus from nvzone/menu)
+-- keyboard: the plugin's own key; mouse: right click anywhere, in the tree it opens the tree menu
+map("n", "<C-t>", function() require("menu").open("default") end, { desc = "menu: open" })
+map({ "n", "v" }, "<RightMouse>", function()
+  require("menu.utils").delete_old_menus()
+  vim.cmd.exec '"normal! \\<RightMouse>"'
+
+  -- clicked buffer decides the menu (nvimtree has file operations)
+  local buf = vim.api.nvim_win_get_buf(vim.fn.getmousepos().winid)
+  local items = vim.bo[buf].filetype == "NvimTree" and "nvimtree" or "default"
+
+  require("menu").open(items, { mouse = true })
+end, { desc = "menu: context menu (mouse)" })
+
 -- telescope
 map("n", "<leader>fw", "<cmd>Telescope live_grep<CR>", { desc = "telescope live grep" })
 map("n", "<leader>fb", "<cmd>Telescope buffers<CR>", { desc = "telescope find buffers" })

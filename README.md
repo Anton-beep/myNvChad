@@ -6,7 +6,8 @@ nvim-cmp, treesitter (main branch), telescope, nvim-tree, gitsigns, diffview
 indent-blankline, which-key, conform, none-ls (cspell), render-markdown (in-place
 markdown rendering), noice (cmdline/messages/popupmenu UI), bufferline (tabline of
 open buffers), milli (animated ASCII splash on a bare `nvim` start — `lights` from its
-community registry). Theme collection: base16-nvim (`:colorscheme base16-*`) with themery
+community registry), menu (volt-based popup menus, nested, keyboard or mouse).
+Theme collection: base16-nvim (`:colorscheme base16-*`) with themery
 as the picker (live preview, remembers the last theme). Builtin colorscheme (habamax)
 until one is picked; lualine.nvim statusline.
 
