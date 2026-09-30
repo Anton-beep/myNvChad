@@ -17,6 +17,27 @@ members, const members, statics, globals, enum members, template parameters) whi
 functions, types, macros, strings and comments keep the colorscheme's colours. The
 palette is derived from the active colorscheme, so switching themes re-tunes it.
 
+# Checks
+Deprecated Nvim APIs are caught by the two tools that actually know about them — nothing here keeps
+its own list of deprecated functions:
+
+- `scripts/check.sh` runs both and prints what they report:
+  1. `lua-language-server --check` over this repo with the Nvim runtime as a workspace library
+     (`.luarc.json`). The runtime's `@deprecated` annotations are the source of truth, so declared
+     deprecations and APIs removed from Nvim (reported as undefined fields) show up with their
+     replacements. `--level=Hint` widens the report to hints; the default is Warning, where
+     deprecations live.
+  2. this config in a headless Nvim, then `:checkhealth vim.deprecated` — Nvim's own detector for
+     deprecated functions, which also catches calls no type information covers (`vim.highlight`, the
+     old `vim.validate{...}` form) and prints a traceback for each. Exits 1 when either pass reports
+     something.
+  What neither can see, because Nvim only documents it as prose in `:h deprecated`: module aliases
+  that are never warned about (`vim.loop`), renamed table keys (keymap's `buffer`), and APIs removed
+  without a shim (`vim.pretty_print` is nil now, so calling it errors).
+- While editing, lua_ls marks deprecated APIs (`configs/lspconfig.lua` points it at
+  `$VIMRUNTIME/lua`, so it knows the runtime's annotations).
+- `<leader>hd` → `:checkhealth vim.deprecated` shows what the current session has used.
+
 # Install
 ## Linux
 ### Removing Existing nvim Config

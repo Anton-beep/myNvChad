@@ -1,0 +1,8 @@
+{
+  "Lua.runtime.version": "LuaJIT",
+  "Lua.workspace.library": ["${env:VIMRUNTIME}/lua", "${3rd}/luv/library"],
+  "Lua.workspace.checkThirdParty": false,
+  "Lua.diagnostics.enable": true,
+  "Lua.telemetry.enable": false,
+  "Lua.diagnostics.disable": ["different-requires"]
+}

@@ -27,6 +27,8 @@ end, { desc = "general format file" })
 
 -- global lsp mappings
 map("n", "<leader>ds", vim.diagnostic.setloclist, { desc = "LSP diagnostic loclist" })
+-- deprecated-API check for this config: the report lists what was called in this session
+map("n", "<leader>hd", "<cmd>checkhealth vim.deprecated<CR>", { desc = "health: deprecated APIs used" })
 
 -- buffers (builtin commands; replaces old tabufline)
 map("n", "<leader>b", "<cmd>enew<CR>", { desc = "buffer new" })
