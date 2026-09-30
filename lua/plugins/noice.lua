@@ -19,5 +19,11 @@ return {
       command_palette = true, -- cmdline and completion popup sit together
       long_message_to_split = true, -- long messages open in a split
     },
+    views = {
+      -- notifications are drawn by the mini view here (views.notify tries the snacks/nvim-notify
+      -- backends first and both are absent), so this is the knob that decides how long they stay.
+      -- 10 s instead of the 2 s default, which was gone before it could be read.
+      mini = { timeout = 10000 },
+    },
   },
 }
