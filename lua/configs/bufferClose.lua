@@ -9,6 +9,14 @@
 
 local M = {}
 
+---Report a failed close the way `nvim_err_writeln` did: an error-coloured message that stays in
+---the message history. (nvim_err_writeln is deprecated since 0.11; `err = true` is its documented
+---replacement and sets the ErrorMsg highlight itself.)
+---@param msg string
+local function report_error(msg)
+  vim.api.nvim_echo({ { msg } }, true, { err = true })
+end
+
 ---Buffers that may take the place of a closed one, in the order the user sees them: the
 ---bufferline order first, then buffer number for anything the tabline does not show.
 ---Plain file buffers come before terminal buffers; the explorer's buffer is unlisted and so
@@ -74,7 +82,10 @@ end
 ---@param force boolean|nil discard unsaved changes (same as `:bdelete!`)
 ---@return boolean closed
 function M.close(bufnr, force)
-  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  -- 0 means "the current buffer" in the Neovim API; resolve it here, because `:bdelete 0` is E939
+  if not bufnr or bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
   if not vim.api.nvim_buf_is_valid(bufnr) then
     return false
   end
@@ -83,9 +94,11 @@ function M.close(bufnr, force)
 
   -- Non-file buffers (the explorer, prompts, ...) keep Neovim's own behaviour.
   if not vim.bo[bufnr].buflisted or vim.bo[bufnr].buftype ~= "" then
-    local ok, err = pcall(vim.cmd, "bdelete" .. bang .. " " .. bufnr)
+    local ok, err = pcall(function()
+      vim.cmd("bdelete" .. bang .. " " .. bufnr)
+    end)
     if not ok then
-      vim.api.nvim_err_writeln(err)
+      report_error(tostring(err))
     end
     return ok
   end
@@ -93,7 +106,7 @@ function M.close(bufnr, force)
   -- `:bdelete` refuses to discard changes; check before touching any window so that a
   -- refusal leaves the layout exactly as it was.
   if not force and vim.bo[bufnr].modified then
-    vim.api.nvim_err_writeln(("E89: No write since last change for buffer %d (add ! to override)"):format(bufnr))
+    report_error(("E89: No write since last change for buffer %d (add ! to override)"):format(bufnr))
     return false
   end
 
@@ -112,9 +125,11 @@ function M.close(bufnr, force)
     -- floating windows are skipped: `:bdelete` closing them is the desired outcome
   end
 
-  local ok, err = pcall(vim.cmd, "bdelete" .. bang .. " " .. bufnr)
+  local ok, err = pcall(function()
+    vim.cmd("bdelete" .. bang .. " " .. bufnr)
+  end)
   if not ok then
-    vim.api.nvim_err_writeln(err)
+    report_error(tostring(err))
   end
   return ok
 end

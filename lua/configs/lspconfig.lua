@@ -20,7 +20,7 @@ vim.diagnostic.config {
 
 local on_attach = function(_, bufnr)
   local function opts(desc)
-    return { buffer = bufnr, desc = "LSP " .. desc }
+    return { buf = bufnr, desc = "LSP " .. desc }
   end
 
   map("n", "gD", vim.lsp.buf.declaration, opts "Go to declaration")
@@ -56,15 +56,15 @@ capabilities.textDocument.completion.completionItem = {
   },
 }
 
-capabilities.textDocument.semanticTokens = {
-  dynamicRegistration = false,
-  tokenTypes = vim.lsp.protocol.SemanticTokenTypes,
-  tokenModifiers = vim.lsp.protocol.SemanticTokenModifiers,
-}
+-- Semantic tokens: keep the capability from make_client_capabilities() above, which carries the
+-- token type and modifier lists a server needs. (vim.lsp.protocol.SemanticTokenTypes and
+-- .SemanticTokenModifiers no longer exist in 0.12 -- assigning them left both fields nil and
+-- replaced the complete capability with an incomplete one.)
+capabilities.textDocument.semanticTokens.dynamicRegistration = false
 
 vim.api.nvim_create_autocmd("LspAttach", {
   callback = function(args)
-    on_attach(_, args.buf)
+    on_attach(nil, args.buf)
   end,
 })
 

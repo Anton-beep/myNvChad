@@ -89,8 +89,10 @@ local function oklab_to_linear(lab)
   }
 end
 
+---Hue of an OKLab colour, in degrees. math.atan2, not math.atan(y, x): LuaJIT's atan takes a single
+---argument and silently ignores the second, which produced hues without their quadrant.
 local function lab_to_lch(lab)
-  return lab[1], math.sqrt(lab[2] ^ 2 + lab[3] ^ 2), math.deg(math.atan(lab[3], lab[2])) % 360
+  return lab[1], math.sqrt(lab[2] ^ 2 + lab[3] ^ 2), math.deg(math.atan2(lab[3], lab[2])) % 360
 end
 
 local function lab_dist(a, b)
