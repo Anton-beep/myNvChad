@@ -6,8 +6,6 @@ return {
   config = function()
     require("nvim-treesitter").setup {}
 
-    -- base parser set; more via :TSInstall
-    -- markdown/markdown_inline for render-markdown.nvim, regex/bash for noice.nvim
     require("nvim-treesitter").install {
       "lua",
       "luadoc",
@@ -20,8 +18,6 @@ return {
       "bash",
     }
 
-    -- enable highlighting when a parser is available
-    -- (replaces the FileType hook the old config provided)
     vim.api.nvim_create_autocmd("FileType", {
       pattern = "*",
       callback = function(args)
