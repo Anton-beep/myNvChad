@@ -557,8 +557,12 @@ vim.api.nvim_create_autocmd("LspTokenUpdate", {
   end,
 })
 
--- a colourscheme switch resets every highlight group *and* changes the palette
-vim.api.nvim_create_autocmd("ColorScheme", { group = augroup, callback = apply })
+-- a colourscheme switch resets every highlight group *and* changes the palette.
+-- VimEnter as well: a theme applied from inside another autocommand (e.g. themery restoring the
+-- saved colourscheme while lazy.nvim's VimEnter handler loads it) fires no ColorScheme event --
+-- nested autocommands are suppressed -- so the palette would stay derived from the scheme that
+-- was active when this module loaded.
+vim.api.nvim_create_autocmd({ "ColorScheme", "VimEnter" }, { group = augroup, callback = apply })
 
 apply()
 
