@@ -32,7 +32,8 @@ map("n", "<leader>ds", vim.diagnostic.setloclist, { desc = "LSP diagnostic locli
 map("n", "<leader>b", "<cmd>enew<CR>", { desc = "buffer new" })
 map("n", "<tab>", "<cmd>bnext<CR>", { desc = "buffer goto next" })
 map("n", "<S-tab>", "<cmd>bprevious<CR>", { desc = "buffer goto prev" })
-map("n", "<leader>x", "<cmd>bdelete<CR>", { desc = "buffer close" })
+-- close the current buffer and keep the window, showing the neighbouring tab
+map("n", "<leader>x", function() require("configs.bufferClose").close() end, { desc = "buffer close" })
 
 -- Comment (built-in since nvim 0.10)
 map("n", "<leader>/", "gcc", { desc = "toggle comment", remap = true })
