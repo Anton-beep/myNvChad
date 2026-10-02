@@ -16,6 +16,7 @@ require("lazy").setup({
 }, require "configs.lazy")
 
 require "options"
+require "configs.searchTips"
 
 vim.schedule(function()
   require "mappings"

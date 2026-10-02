@@ -19,6 +19,21 @@ return {
       command_palette = true,
       long_message_to_split = true,
     },
+    -- search tip cards (configs/searchTips.lua) get a popup instead of a mini badge
+    routes = {
+      {
+        filter = { find = "Search tip" },
+        view = "popup",
+        opts = {
+          enter = false, -- never steal focus from the / prompt
+          timeout = 8000,
+          format = { "{message}" }, -- skip the "{level}" prefix (icon + "Info")
+          size = { width = "auto", height = "auto", max_width = 52, max_height = 6 },
+          position = { row = 2, col = "50%" },
+          border = { style = "rounded", padding = { 0, 1 } },
+        },
+      },
+    },
     views = {
       mini = { timeout = 10000 },
     },
